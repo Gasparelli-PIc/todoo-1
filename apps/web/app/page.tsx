@@ -1,102 +1,265 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
+import { useEffect, useMemo, useState } from "react";
+
+type Task = {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
 };
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+const STORAGE_KEY = "todoo:tasks";
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [editingDescription, setEditingDescription] = useState("");
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
+  // carregar do localStorage
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setTasks(
+          parsed.map((t) => ({
+            id: t.id,
+            title: t.title ?? "",
+            description: typeof t.description === "string" ? t.description : "",
+            completed: !!t.completed,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn("Falha ao ler tarefas do storage", err);
+    }
+  }, []);
+
+  // persistir no localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    } catch (err) {
+      console.warn("Falha ao salvar tarefas no storage", err);
+    }
+  }, [tasks]);
+
+  const remainingCount = useMemo(
+    () => tasks.filter((t) => !t.completed).length,
+    [tasks]
+  );
+
+  function addTask() {
+    const title = newTitle.trim();
+    if (!title) return;
+    const description = newDescription.trim();
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setTasks((prev) => [{ id, title, description, completed: false }, ...prev]);
+    setNewTitle("");
+    setNewDescription("");
+  }
+
+  function toggleTask(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+    );
+  }
+
+  function startEdit(task: Task) {
+    setEditingId(task.id);
+    setEditingTitle(task.title);
+    setEditingDescription(task.description ?? "");
+  }
+
+  function saveEdit() {
+    if (!editingId) return;
+    const title = editingTitle.trim();
+    if (!title) return; // simples: evita salvar vazio
+    const description = editingDescription.trim();
+    setTasks((prev) => prev.map((t) => (t.id === editingId ? { ...t, title, description } : t)));
+    setEditingId(null);
+    setEditingTitle("");
+    setEditingDescription("");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditingTitle("");
+    setEditingDescription("");
+  }
+
+  function removeTask(id: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  function clearCompleted() {
+    setTasks((prev) => prev.filter((t) => !t.completed));
+  }
+
+  return (
+    <main style={{ maxWidth: 720, margin: "0 auto", padding: 16 }}>
+      <h1 style={{ marginBottom: 16 }}>Todoo</h1>
+
+      <section
+        aria-label="Criar tarefa"
+        style={{ display: "grid", gap: 8, marginBottom: 16 }}
+      >
+        <input
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTask();
+          }}
+          placeholder="Nova tarefa..."
+          aria-label="Título da nova tarefa"
+          style={{ padding: 8, border: "1px solid #ddd", borderRadius: 6 }}
+        />
+        <input
+          type="text"
+          value={newDescription}
+          onChange={(e) => setNewDescription(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTask();
+          }}
+          placeholder="Descrição (opcional)"
+          aria-label="Descrição da nova tarefa"
+          style={{ padding: 8, border: "1px solid #ddd", borderRadius: 6 }}
+        />
+        <div>
+          <button
+            onClick={addTask}
+            style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #ddd", background: "#111", color: "#fff" }}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.com/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+            Adicionar
+          </button>
         </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.com?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.com →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      <section aria-label="Lista de tarefas" style={{ display: "grid", gap: 8 }}>
+        {tasks.length === 0 ? (
+          <p style={{ color: "#666" }}>Nenhuma tarefa ainda. Adicione a primeira!</p>
+        ) : (
+          tasks.map((task) => (
+            <article
+              key={task.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: 8,
+                border: "1px solid #eee",
+                borderRadius: 8,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={task.completed}
+                onChange={() => toggleTask(task.id)}
+                aria-label={task.completed ? "Marcar como não concluída" : "Marcar como concluída"}
+              />
+
+              <div style={{ flex: 1, display: "grid", gap: 6 }}>
+                {editingId === task.id ? (
+                  <>
+                    <input
+                      autoFocus
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit();
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      aria-label="Editar título da tarefa"
+                      placeholder="Título"
+                      style={{ padding: 6, border: "1px solid #ddd", borderRadius: 6 }}
+                    />
+                    <input
+                      value={editingDescription}
+                      onChange={(e) => setEditingDescription(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit();
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      aria-label="Editar descrição da tarefa"
+                      placeholder="Descrição (opcional)"
+                      style={{ padding: 6, border: "1px solid #ddd", borderRadius: 6 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <span style={{
+                      textDecoration: task.completed ? "line-through" : "none",
+                      color: task.completed ? "#888" : "inherit",
+                      fontWeight: 500,
+                    }}>
+                      {task.title}
+                    </span>
+                    {task.description ? (
+                      <span style={{ color: "#666", fontSize: 14 }}>
+                        {task.description}
+                      </span>
+                    ) : null}
+                  </>
+                )}
+              </div>
+
+              {editingId === task.id ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={saveEdit}
+                    style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", background: "#111", color: "#fff" }}
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    onClick={cancelEdit}
+                    style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", background: "#fff" }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => startEdit(task)}
+                    style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", background: "#fff" }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => removeTask(task.id)}
+                    aria-label="Apagar tarefa"
+                    style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", background: "#fff", color: "#c00" }}
+                  >
+                    Apagar
+                  </button>
+                </div>
+              )}
+            </article>
+          ))
+        )}
+      </section>
+
+      {tasks.length > 0 && (
+        <footer style={{ display: "flex", justifyContent: "space-between", marginTop: 16, color: "#555" }}>
+          <span>{remainingCount} pendente(s)</span>
+          <button
+            onClick={clearCompleted}
+            disabled={tasks.every((t) => !t.completed)}
+            style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", background: "#fff" }}
+          >
+            Limpar concluídas
+          </button>
+        </footer>
+      )}
+    </main>
   );
 }

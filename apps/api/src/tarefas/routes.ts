@@ -13,7 +13,7 @@ interface Tarefa {
 let tarefasList: Tarefa[] = []
 
 export default async function tarefasRoutes(app: fastifyTypedInstance) {
-  app.get('/todas-tarefas', {
+  app.get('/tasks', {
     schema: {
       description: 'Lista todas as tarefas',
       tags: ['tarefas'],
@@ -30,7 +30,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
     return tarefasList
   })
 
-  app.post('/adicionar-tarefa', {
+  app.post('/tasks', {
     schema: {
       description: 'Cria uma nova tarefa',
       tags: ['tarefas'],
@@ -56,7 +56,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
     
   })
 
-  app.delete('/deletar-tarefa/:id', {
+  app.delete('/tasks/:id', {
     schema: {
       description: 'Deleta uma tarefa',
       tags: ['tarefas'],
@@ -74,7 +74,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
     return reply.status(201).send({ message: 'Tarefa deletada com sucesso' })
   })
 
-  app.put('/atualizar-tarefa/:id', {
+  app.put('/tasks/:id', {
     schema: {
       description: 'Atualiza uma tarefa',
       tags: ['tarefas'],

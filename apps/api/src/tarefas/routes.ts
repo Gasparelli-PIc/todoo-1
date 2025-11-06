@@ -10,7 +10,7 @@ interface Tarefa {
   completo: boolean
 }
 
-const tarefas: Tarefa[] = []
+let tarefasList: Tarefa[] = []
 
 export default async function tarefasRoutes(app: fastifyTypedInstance) {
   app.get('/todas-tarefas', {
@@ -27,7 +27,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
       }
     },
   }, () => {
-    return tarefas
+    return tarefasList
   })
 
   app.post('/adicionar-tarefa', {
@@ -40,19 +40,63 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
         completo: z.boolean(),
       }),
       response: {
-        201: z.null().describe('Tarefa criada com sucesso'),
+        201: z.object({ message: z.string() }).describe('Tarefa criada com sucesso'),
       },
     },
   },async (request, reply) => {
     const { titulo, descricao, completo } = request.body
 
-    tarefas.push({
+    tarefasList.push({
       id: crypto.randomUUID(),
       titulo,
       descricao,
       completo,
     })
-    return reply.status(201).send(null)
+    return reply.status(201).send({ message: 'Tarefa criada com sucesso' })
     
+  })
+
+  app.delete('/deletar-tarefa/:id', {
+    schema: {
+      description: 'Deleta uma tarefa',
+      tags: ['tarefas'],
+      params: z.object({
+        id: z.string(),
+      }),
+    },
+  }, async (request, reply) => {
+    const { id } = request.params
+    const tarefa = tarefasList.find((tarefa) => tarefa.id === id)
+    if (!tarefa) {
+      return reply.status(404).send({ error: 'Tarefa não encontrada' })
+    }
+    tarefasList = tarefasList.filter((tarefa) => tarefa.id !== id)
+    return reply.status(201).send({ message: 'Tarefa deletada com sucesso' })
+  })
+
+  app.put('/atualizar-tarefa/:id', {
+    schema: {
+      description: 'Atualiza uma tarefa',
+      tags: ['tarefas'],
+      params: z.object({
+        id: z.string(),
+      }),
+      body: z.object({
+        titulo : z.string(),
+        descricao : z.string(),
+        completo : z.boolean()
+      }),
+    },
+  }, async (request, reply) => {
+    const { id } = request.params
+    const { titulo, descricao, completo } = request.body
+    const tarefa = tarefasList.find((tarefa) => tarefa.id === id)
+    if (!tarefa) {
+      return reply.status(404).send({ error: 'Tarefa não encontrada' })
+    }
+    tarefa.titulo = titulo
+    tarefa.descricao = descricao
+    tarefa.completo = completo
+    return reply.status(201).send({message : 'Tarefa atualizada com exito'})
   })
 }

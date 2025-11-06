@@ -6,9 +6,18 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "check-types": "turbo run check-types",
+    "dev:api": "npm run dev -w apps/api",
+    "kubb": "kubb --config kubb.config.ts",
+    "generate:client": "npm run kubb",
+    "generate:client:auto": "node scripts/generate-client.js"
   },
   "devDependencies": {
+    "@kubb/core": "^4.5.7",
+    "@kubb/plugin-oas": "^4.5.7",
+    "@kubb/plugin-react-query": "^4.5.7",
+    "@kubb/plugin-ts": "^4.5.7",
+    "kubb": "^3.0.128",
     "prettier": "^3.6.2",
     "turbo": "^2.6.0",
     "typescript": "5.9.2"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
   title: "Todoo",
@@ -17,7 +18,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body className={poppins.className}>{children}</body>
+      <body className={poppins.className}>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

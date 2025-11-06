@@ -23,6 +23,12 @@ app.register(fastifySwagger, {
       description: 'API for Todo app',
       version: '1.0.0',
     },
+    servers: [
+      {
+        url: 'http://localhost:3001',
+        description: 'Local dev server',
+      },
+    ],
   },
   transform: jsonSchemaTransform,
 })

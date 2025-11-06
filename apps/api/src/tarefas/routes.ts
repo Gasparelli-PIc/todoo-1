@@ -15,6 +15,7 @@ let tarefasList: Tarefa[] = []
 export default async function tarefasRoutes(app: fastifyTypedInstance) {
   app.get('/tasks', {
     schema: {
+      operationId: 'listTasks',
       description: 'Lista todas as tarefas',
       tags: ['tarefas'],
       response: {
@@ -32,6 +33,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
 
   app.post('/tasks', {
     schema: {
+      operationId: 'createTask',
       description: 'Cria uma nova tarefa',
       tags: ['tarefas'],
       body: z.object({
@@ -58,6 +60,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
 
   app.delete('/tasks/:id', {
     schema: {
+      operationId: 'deleteTask',
       description: 'Deleta uma tarefa',
       tags: ['tarefas'],
       params: z.object({
@@ -76,6 +79,7 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
 
   app.put('/tasks/:id', {
     schema: {
+      operationId: 'updateTask',
       description: 'Atualiza uma tarefa',
       tags: ['tarefas'],
       params: z.object({

@@ -1,89 +1,71 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useListTasks, listTasksQueryKey } from "../src/generated/useListTasks";
+import { useCreateTask } from "../src/generated/useCreateTask";
+import { useUpdateTask } from "../src/generated/useUpdateTask";
+import { useDeleteTask } from "../src/generated/useDeleteTask";
 
-type Task = {
+type UiTask = {
   id: string;
-  title: string;
-  description: string;
-  completed: boolean;
+  titulo: string;
+  descricao: string;
+  completo: boolean;
 };
 
-const STORAGE_KEY = "todoo:tasks";
-
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const qc = useQueryClient();
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
 
-  // carregar do localStorage
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        setTasks(
-          parsed.map((t) => ({
-            id: t.id,
-            title: t.title ?? "",
-            description: typeof t.description === "string" ? t.description : "",
-            completed: !!t.completed,
-          }))
-        );
-      }
-    } catch (err) {
-      console.warn("Falha ao ler tarefas do storage", err);
-    }
-  }, []);
+  const { data: tasks = [], isLoading } = useListTasks();
 
-  // persistir no localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    } catch (err) {
-      console.warn("Falha ao salvar tarefas no storage", err);
-    }
-  }, [tasks]);
+  const createTask = useCreateTask({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: listTasksQueryKey() }),
+    },
+  });
+  const updateTask = useUpdateTask({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: listTasksQueryKey() }),
+    },
+  });
+  const deleteTask = useDeleteTask({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: listTasksQueryKey() }),
+    },
+  });
 
   const remainingCount = useMemo(
-    () => tasks.filter((t) => !t.completed).length,
+    () => tasks.filter((t) => !t.completo).length,
     [tasks]
   );
 
   function addTask() {
-    const title = newTitle.trim();
-    if (!title) return;
-    const description = newDescription.trim();
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    setTasks((prev) => [{ id, title, description, completed: false }, ...prev]);
+    const titulo = newTitle.trim();
+    if (!titulo) return;
+    const descricao = newDescription.trim();
+    createTask.mutate({ data: { titulo, descricao, completo: false } });
     setNewTitle("");
     setNewDescription("");
   }
 
-  function toggleTask(id: string) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
-  }
-
-  function startEdit(task: Task) {
+  function startEdit(task: UiTask) {
     setEditingId(task.id);
-    setEditingTitle(task.title);
-    setEditingDescription(task.description ?? "");
+    setEditingTitle(task.titulo);
+    setEditingDescription(task.descricao ?? "");
   }
 
   function saveEdit() {
     if (!editingId) return;
-    const title = editingTitle.trim();
-    if (!title) return; // simples: evita salvar vazio
-    const description = editingDescription.trim();
-    setTasks((prev) => prev.map((t) => (t.id === editingId ? { ...t, title, description } : t)));
+    const titulo = editingTitle.trim();
+    if (!titulo) return;
+    const descricao = editingDescription.trim();
+    updateTask.mutate({ id: editingId, data: { titulo, descricao, completo: tasks.find(t => t.id === editingId)?.completo ?? false } });
     setEditingId(null);
     setEditingTitle("");
     setEditingDescription("");
@@ -95,12 +77,16 @@ export default function Home() {
     setEditingDescription("");
   }
 
+  function toggleTask(task: UiTask) {
+    updateTask.mutate({ id: task.id, data: { titulo: task.titulo, descricao: task.descricao, completo: !task.completo } });
+  }
+
   function removeTask(id: string) {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    deleteTask.mutate({ id });
   }
 
   function clearCompleted() {
-    setTasks((prev) => prev.filter((t) => !t.completed));
+    tasks.filter((t) => t.completo).forEach((t) => deleteTask.mutate({ id: t.id }));
   }
 
   return (
@@ -136,15 +122,18 @@ export default function Home() {
         <div>
           <button
             onClick={addTask}
+            disabled={createTask.isPending}
             style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #ddd", background: "#111", color: "#fff" }}
           >
-            Adicionar
+            {createTask.isPending ? "Adicionando..." : "Adicionar"}
           </button>
         </div>
       </section>
 
       <section aria-label="Lista de tarefas" style={{ display: "grid", gap: 8 }}>
-        {tasks.length === 0 ? (
+        {isLoading ? (
+          <p style={{ color: "#666" }}>Carregando...</p>
+        ) : tasks.length === 0 ? (
           <p style={{ color: "#666" }}>Nenhuma tarefa ainda. Adicione a primeira!</p>
         ) : (
           tasks.map((task) => (
@@ -161,9 +150,9 @@ export default function Home() {
             >
               <input
                 type="checkbox"
-                checked={task.completed}
-                onChange={() => toggleTask(task.id)}
-                aria-label={task.completed ? "Marcar como não concluída" : "Marcar como concluída"}
+                checked={task.completo}
+                onChange={() => toggleTask(task)}
+                aria-label={task.completo ? "Marcar como não concluída" : "Marcar como concluída"}
               />
 
               <div style={{ flex: 1, display: "grid", gap: 6 }}>
@@ -196,15 +185,15 @@ export default function Home() {
                 ) : (
                   <>
                     <span style={{
-                      textDecoration: task.completed ? "line-through" : "none",
-                      color: task.completed ? "#888" : "inherit",
+                      textDecoration: task.completo ? "line-through" : "none",
+                      color: task.completo ? "#888" : "inherit",
                       fontWeight: 500,
                     }}>
-                      {task.title}
+                      {task.titulo}
                     </span>
-                    {task.description ? (
+                    {task.descricao ? (
                       <span style={{ color: "#666", fontSize: 14 }}>
-                        {task.description}
+                        {task.descricao}
                       </span>
                     ) : null}
                   </>
@@ -253,7 +242,7 @@ export default function Home() {
           <span>{remainingCount} pendente(s)</span>
           <button
             onClick={clearCompleted}
-            disabled={tasks.every((t) => !t.completed)}
+            disabled={tasks.every((t) => !t.completo)}
             style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #ddd", background: "#fff" }}
           >
             Limpar concluídas

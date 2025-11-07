@@ -1,6 +1,6 @@
-import type { fastifyTypedInstance } from '../types.ts'
+import type { fastifyTypedInstance } from '../../types.ts'
 import { z } from 'zod'
-import { prisma } from '../lib/prisma.ts'
+import { prisma } from '../../lib/prisma.ts'
 
 export default async function tarefasRoutes(app: fastifyTypedInstance) {
   app.get('/tasks', {
@@ -38,8 +38,21 @@ export default async function tarefasRoutes(app: fastifyTypedInstance) {
     },
   },async (request, reply) => {
     const { titulo, descricao, completo } = request.body
+    // Garante um usuário associado (usa o primeiro disponível, senão cria um padrão)
+    let user = await prisma.user.findFirst({ select: { id: true } })
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          nome: 'Usuário Padrão',
+          name: 'Usuário Padrão',
+          email: 'default@local',
+          senha: 'default',
+        },
+        select: { id: true },
+      })
+    }
     await prisma.task.create({
-      data: { titulo, descricao, completo },
+      data: { titulo, descricao, completo, userId: user.id },
     })
     return reply.status(201).send({ message: 'Tarefa criada com sucesso' })
   })

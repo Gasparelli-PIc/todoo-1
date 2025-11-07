@@ -5,7 +5,10 @@ import { validatorCompiler, serializerCompiler, jsonSchemaTransform } from 'fast
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUi from '@fastify/swagger-ui'
-import tarefasRoutes from './tarefas/routes.ts'
+import { registerHttp } from './http/index.ts'
+import { auth } from './lib/auth.ts'
+import middie from '@fastify/middie'
+import { toNodeHandler } from 'better-auth/node'
 
 const app = Fastify({logger:true}).withTypeProvider<ZodTypeProvider>() // <- tipagem com Zod 
 
@@ -15,10 +18,13 @@ app.setSerializerCompiler(serializerCompiler)
 
 // CORS (libera tudo em dev; restrinja em prod)
 await app.register(fastifyCors, {
-  origin: '*',
+  origin: ['http://localhost:3000'],
+  credentials: true,
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 })
+
+await app.register(middie)
 
 app.register(fastifySwagger, {
   openapi: {
@@ -45,7 +51,9 @@ app.get('/', () => {
   return { message: 'API is running' }
 })
 
-await app.register(tarefasRoutes, { prefix: '/tarefas' })
+await registerHttp(app)
+app.use('/api/auth', toNodeHandler(auth))
+
 
 //server
 const start = async () => {

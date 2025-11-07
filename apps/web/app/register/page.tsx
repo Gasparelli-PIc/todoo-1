@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { authClient } from "../../lib/auth-client";
+import { usePostV1AuthSignInEmail } from "../src/generated/usePostV1AuthSignInEmail";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const signUp = usePostV1AuthSignInEmail();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,12 +26,18 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      // Better Auth - email & password
-      // @ts-ignore - assinatura pode variar entre versões
-      await authClient.signUp.email({ email, password });
+      const fallbackName = email.split("@")[0] || "Usuário";
+      await signUp.mutateAsync({
+        data: {
+          name: fallbackName,
+          email,
+          password,
+        },
+      });
       router.push("/login");
-    } catch (err: any) {
-      setError(err?.message ?? "Não foi possível registrar.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Não foi possível registrar.";
+      setError(message);
     } finally {
       setLoading(false);
     }

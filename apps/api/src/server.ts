@@ -9,6 +9,7 @@ import { registerHttp } from './http/index.ts'
 import { auth } from './lib/auth.ts'
 import middie from '@fastify/middie'
 import { toNodeHandler } from 'better-auth/node'
+import { forwardToBetterAuth } from './http/auth/forward.ts'
 
 const app = Fastify({logger:true}).withTypeProvider<ZodTypeProvider>() // <- tipagem com Zod 
 
@@ -66,6 +67,14 @@ app.use('/api/auth/', (req, res, next) => {
     return
   }
   next()
+})
+
+// Compat: alguns clients do Better Auth usam /api/auth/get-session
+app.get('/api/auth/get-session', async (request, reply) => {
+  return forwardToBetterAuth(request as any, reply as any, {
+    targetPath: '/api/auth/session',
+    method: 'GET',
+  })
 })
 
 app.use('/api/auth', toNodeHandler(auth))

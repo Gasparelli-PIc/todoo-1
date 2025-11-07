@@ -8,7 +8,7 @@ export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(() => new QueryClient())
   // Configure o client ANTES de montar filhos, evitando primeira requisição sem baseURL
   const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
-  setConfig({ baseURL })
+  setConfig({ baseURL, withCredentials: true })
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 }
 

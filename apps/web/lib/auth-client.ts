@@ -8,5 +8,9 @@ type PublicAuthClient = {
 }
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+  // Garante envio de cookies em CORS (sessão)
+  fetchOptions: {
+    credentials: "include",
+  },
 }) as PublicAuthClient

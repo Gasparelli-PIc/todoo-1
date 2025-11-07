@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { authClient } from "../../lib/auth-client";
+import { usePostV1AuthLogin } from "../src/generated/usePostV1AuthLogin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,19 +14,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const login = usePostV1AuthLogin();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      // Better Auth - email & password
-      // @ts-ignore - assinatura pode variar entre versões
-      await authClient.signIn.email({ email, password });
+      await login.mutateAsync({ data: { email, password } });
       router.push("/");
       router.refresh();
-    } catch (err: any) {
-      setError(err?.message ?? "Falha ao entrar. Verifique suas credenciais.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Falha ao entrar. Verifique suas credenciais.";
+      setError(message);
     } finally {
       setLoading(false);
     }

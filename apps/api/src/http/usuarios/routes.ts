@@ -1,6 +1,7 @@
 import type { fastifyTypedInstance } from '../../types.ts'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma.ts'
+import { randomUUID } from 'node:crypto'
 
 export default async function usuariosRoutes(app: fastifyTypedInstance) {
   // Listar usuários (campos essenciais)
@@ -19,10 +20,10 @@ export default async function usuariosRoutes(app: fastifyTypedInstance) {
     },
   }, async () => {
     const usuarios = await prisma.user.findMany({
-      orderBy: { /* se existir createdAt usa, senão id */ id: 'desc' },
-      select: { id: true, nome: true, email: true },
+      orderBy: { id: 'desc' },
+      select: { id: true, name: true, email: true },
     })
-    return usuarios
+    return usuarios.map(u => ({ id: u.id, nome: u.name, email: u.email }))
   })
 
   // Buscar um usuário por ID
@@ -39,9 +40,9 @@ export default async function usuariosRoutes(app: fastifyTypedInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params
-    const usuario = await prisma.user.findUnique({ where: { id }, select: { id: true, nome: true, email: true } })
+    const usuario = await prisma.user.findUnique({ where: { id }, select: { id: true, name: true, email: true } })
     if (!usuario) return reply.status(404).send({ error: 'Usuário não encontrado' })
-    return usuario
+    return { id: usuario.id, nome: usuario.name, email: usuario.email }
   })
 
   // Criar usuário
@@ -53,15 +54,14 @@ export default async function usuariosRoutes(app: fastifyTypedInstance) {
       body: z.object({
         nome: z.string().min(1),
         email: z.string().email(),
-        senha: z.string().min(4),
       }),
       response: {
         201: z.object({ id: z.string(), message: z.string() }),
       },
     },
   }, async (request, reply) => {
-    const { nome, email, senha } = request.body
-    const created = await prisma.user.create({ data: { nome, name: nome, email, senha } })
+    const { nome, email } = request.body
+    const created = await prisma.user.create({ data: { id: randomUUID(), name: nome, email } })
     return reply.status(201).send({ id: created.id, message: 'Usuário criado com sucesso' })
   })
 
@@ -75,7 +75,6 @@ export default async function usuariosRoutes(app: fastifyTypedInstance) {
       body: z.object({
         nome: z.string().min(1).optional(),
         email: z.string().email().optional(),
-        senha: z.string().min(4).optional(),
       }),
       response: {
         200: z.object({ message: z.string() }),
@@ -84,10 +83,10 @@ export default async function usuariosRoutes(app: fastifyTypedInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params
-    const { nome, email, senha } = request.body
+    const { nome, email } = request.body
     const exists = await prisma.user.findUnique({ where: { id } })
     if (!exists) return reply.status(404).send({ error: 'Usuário não encontrado' })
-    await prisma.user.update({ where: { id }, data: { nome, name: nome ?? undefined, email, senha } })
+    await prisma.user.update({ where: { id }, data: { name: nome ?? undefined, email } })
     return { message: 'Usuário atualizado com sucesso' }
   })
 

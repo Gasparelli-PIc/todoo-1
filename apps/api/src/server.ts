@@ -52,6 +52,22 @@ app.get('/', () => {
 })
 
 await registerHttp(app)
+// CORS + encaminhamento (via middie) antes do roteamento do Fastify
+app.use('/api/auth/', (req, res, next) => {
+  const origin = 'http://localhost:3000'
+  res.setHeader('Access-Control-Allow-Origin', origin)
+  res.setHeader('Vary', 'Origin')
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS')
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204
+    res.end()
+    return
+  }
+  next()
+})
+
 app.use('/api/auth', toNodeHandler(auth))
 
 

@@ -1,14 +1,54 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 type ForwardOptions = {
-  targetPath: string
+  targetPath?: string
   method?: string
   body?: unknown
 }
 
 export async function forwardToBetterAuth(request: FastifyRequest, reply: FastifyReply, options: ForwardOptions) {
-  const method = (options.method || request.method || 'GET').toUpperCase()
-  const url = new URL(options.targetPath, `http://localhost:${process.env.PORT ?? 3001}`)
+  // Determina caminho-alvo e corpo com base na URL original quando targetPath não for informado
+  const originalUrl = new URL(request.url, 'http://localhost')
+  const originalPath = originalUrl.pathname
+
+  let targetPath = options.targetPath
+  let method = (options.method || request.method || 'GET').toUpperCase()
+  let body: unknown = options.body
+
+  if (!targetPath) {
+    switch (originalPath) {
+      case '/v1/auth/emailotp': {
+        targetPath = '/api/auth/email-otp/send-verification-otp'
+        method = 'POST'
+        const reqBody = (request as any).body ?? {}
+        const email = typeof reqBody.email === 'string' ? reqBody.email.toLowerCase() : ''
+        const type = reqBody.type ?? 'sign-in'
+        body = { email, type }
+        break
+      }
+      case '/v1/auth/sign-in/emailotp': {
+        targetPath = '/api/auth/sign-in/email-otp'
+        method = 'POST'
+        const reqBody = (request as any).body ?? {}
+        const email = typeof reqBody.email === 'string' ? reqBody.email.toLowerCase() : ''
+        const otp = reqBody.otp
+        body = { email, otp }
+        break
+      }
+      case '/v1/auth/logout': {
+        targetPath = '/api/auth/sign-out'
+        method = 'POST'
+        body = undefined
+        break
+      }
+      default: {
+        // fallback: mantém o caminho original
+        targetPath = originalPath
+      }
+    }
+  }
+
+  const url = new URL(`${targetPath}${originalUrl.search}`, `http://localhost:${process.env.PORT ?? 3001}`)
 
   // Copia cabeçalhos relevantes, incluindo cookies
   const headers: Record<string, string> = {
@@ -23,7 +63,7 @@ export async function forwardToBetterAuth(request: FastifyRequest, reply: Fastif
     method,
     headers,
     // Só envia body em métodos com payload
-    body: method === 'GET' || method === 'HEAD' ? undefined : JSON.stringify(options.body ?? {}),
+    body: method === 'GET' || method === 'HEAD' ? undefined : JSON.stringify(body ?? {}),
     // Assegura que cookies sejam enviados quando o Node respeitar cookies (aqui propagamos via header manualmente)
   }
 

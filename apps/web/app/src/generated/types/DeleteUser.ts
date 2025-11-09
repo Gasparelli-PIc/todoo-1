@@ -24,6 +24,26 @@ export type DeleteUser200 = {
 /**
  * @description Default Response
 */
+export type DeleteUser401 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
+export type DeleteUser403 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
 export type DeleteUser404 = {
     /**
      * @type string
@@ -36,5 +56,5 @@ export type DeleteUserMutationResponse = DeleteUser200;
 export type DeleteUserMutation = {
     Response: DeleteUser200;
     PathParams: DeleteUserPathParams;
-    Errors: DeleteUser404;
+    Errors: DeleteUser401 | DeleteUser403 | DeleteUser404;
 };

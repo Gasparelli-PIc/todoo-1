@@ -11,6 +11,18 @@ export type GetUserPathParams = {
     id: string;
 };
 
+export const getUser200RoleEnum = {
+    "ADMIN": "ADMIN"
+} as const;
+
+export type GetUser200RoleEnumKey = (typeof getUser200RoleEnum)[keyof typeof getUser200RoleEnum];
+
+export const getUser200RoleEnum2 = {
+    "USER": "USER"
+} as const;
+
+export type GetUser200RoleEnum2Key = (typeof getUser200RoleEnum2)[keyof typeof getUser200RoleEnum2];
+
 /**
  * @description Default Response
 */
@@ -27,6 +39,27 @@ export type GetUser200 = {
      * @type string, email
     */
     email: string;
+    role: (GetUser200RoleEnumKey | GetUser200RoleEnum2Key);
+};
+
+/**
+ * @description Default Response
+*/
+export type GetUser401 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
+export type GetUser403 = {
+    /**
+     * @type string
+    */
+    error: string;
 };
 
 /**
@@ -44,5 +77,5 @@ export type GetUserQueryResponse = GetUser200;
 export type GetUserQuery = {
     Response: GetUser200;
     PathParams: GetUserPathParams;
-    Errors: GetUser404;
+    Errors: GetUser401 | GetUser403 | GetUser404;
 };

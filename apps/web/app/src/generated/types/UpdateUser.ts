@@ -24,12 +24,44 @@ export type UpdateUser200 = {
 /**
  * @description Default Response
 */
+export type UpdateUser401 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
+export type UpdateUser403 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
 export type UpdateUser404 = {
     /**
      * @type string
     */
     error: string;
 };
+
+export const updateUserMutationRequestRoleEnum = {
+    "ADMIN": "ADMIN"
+} as const;
+
+export type UpdateUserMutationRequestRoleEnumKey = (typeof updateUserMutationRequestRoleEnum)[keyof typeof updateUserMutationRequestRoleEnum];
+
+export const updateUserMutationRequestRoleEnum2 = {
+    "USER": "USER"
+} as const;
+
+export type UpdateUserMutationRequestRoleEnum2Key = (typeof updateUserMutationRequestRoleEnum2)[keyof typeof updateUserMutationRequestRoleEnum2];
 
 export type UpdateUserMutationRequest = {
     /**
@@ -41,6 +73,7 @@ export type UpdateUserMutationRequest = {
      * @type string | undefined, email
     */
     email?: string;
+    role?: (UpdateUserMutationRequestRoleEnumKey | UpdateUserMutationRequestRoleEnum2Key);
 };
 
 export type UpdateUserMutationResponse = UpdateUser200;
@@ -49,5 +82,5 @@ export type UpdateUserMutation = {
     Response: UpdateUser200;
     Request: UpdateUserMutationRequest;
     PathParams: UpdateUserPathParams;
-    Errors: UpdateUser404;
+    Errors: UpdateUser401 | UpdateUser403 | UpdateUser404;
 };

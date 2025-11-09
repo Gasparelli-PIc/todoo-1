@@ -11,6 +11,7 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@casl/ability": "^6.7.3",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.90.7",
     "axios": "^1.13.2",

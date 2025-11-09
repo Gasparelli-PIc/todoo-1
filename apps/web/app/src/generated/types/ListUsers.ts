@@ -4,27 +4,46 @@
 */
 
 
+export const listUsers200RoleEnum = {
+    "ADMIN": "ADMIN"
+} as const;
+
+export type ListUsers200RoleEnumKey = (typeof listUsers200RoleEnum)[keyof typeof listUsers200RoleEnum];
+
+export const listUsers200RoleEnum2 = {
+    "USER": "USER"
+} as const;
+
+export type ListUsers200RoleEnum2Key = (typeof listUsers200RoleEnum2)[keyof typeof listUsers200RoleEnum2];
+
 /**
  * @description Default Response
 */
-export type ListUsers200 = {
+export type ListUsers200 = ListUsers200RoleEnumKey[];
+
+/**
+ * @description Default Response
+*/
+export type ListUsers401 = {
     /**
      * @type string
     */
-    id: string;
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
+export type ListUsers403 = {
     /**
      * @type string
     */
-    nome: string;
-    /**
-     * @type string, email
-    */
-    email: string;
-}[];
+    error: string;
+};
 
 export type ListUsersQueryResponse = ListUsers200;
 
 export type ListUsersQuery = {
     Response: ListUsers200;
-    Errors: any;
+    Errors: ListUsers401 | ListUsers403;
 };

@@ -4,9 +4,9 @@
 */
 
 import fetch from "./.kubb/fetcher.ts";
-import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
-import type { ListUsersQueryResponse } from "./types/ListUsers.ts";
 import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from "@tanstack/react-query";
+import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
+import type { ListUsersQueryResponse, ListUsers401, ListUsers403 } from "./types/ListUsers.ts";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 
 export const listUsersSuspenseQueryKey = () => [{ url: '/usuarios/users' }] as const
@@ -20,13 +20,13 @@ export type ListUsersSuspenseQueryKey = ReturnType<typeof listUsersSuspenseQuery
 export async function listUsersSuspense(config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const { client: request = fetch, ...requestConfig } = config  
   
-  const res = await request<ListUsersQueryResponse, ResponseErrorConfig<Error>, unknown>({ method : "GET", url : `/usuarios/users`, ... requestConfig })  
+  const res = await request<ListUsersQueryResponse, ResponseErrorConfig<ListUsers401 | ListUsers403>, unknown>({ method : "GET", url : `/usuarios/users`, ... requestConfig })  
   return res.data
 }
 
 export function listUsersSuspenseQueryOptions(config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const queryKey = listUsersSuspenseQueryKey()
-  return queryOptions<ListUsersQueryResponse, ResponseErrorConfig<Error>, ListUsersQueryResponse, typeof queryKey>({
+  return queryOptions<ListUsersQueryResponse, ResponseErrorConfig<ListUsers401 | ListUsers403>, ListUsersQueryResponse, typeof queryKey>({
  
    queryKey,
    queryFn: async ({ signal }) => {
@@ -42,7 +42,7 @@ export function listUsersSuspenseQueryOptions(config: Partial<RequestConfig> & {
  */
 export function useListUsersSuspense<TData = ListUsersQueryResponse, TQueryKey extends QueryKey = ListUsersSuspenseQueryKey>(options: 
 {
-  query?: Partial<UseSuspenseQueryOptions<ListUsersQueryResponse, ResponseErrorConfig<Error>, TData, TQueryKey>> & { client?: QueryClient },
+  query?: Partial<UseSuspenseQueryOptions<ListUsersQueryResponse, ResponseErrorConfig<ListUsers401 | ListUsers403>, TData, TQueryKey>> & { client?: QueryClient },
   client?: Partial<RequestConfig> & { client?: typeof fetch }
 }
  = {}) {
@@ -54,7 +54,7 @@ export function useListUsersSuspense<TData = ListUsersQueryResponse, TQueryKey e
    ...listUsersSuspenseQueryOptions(config),
    queryKey,
    ...queryOptions
-  } as unknown as UseSuspenseQueryOptions, queryClient) as UseSuspenseQueryResult<TData, ResponseErrorConfig<Error>> & { queryKey: TQueryKey }
+  } as unknown as UseSuspenseQueryOptions, queryClient) as UseSuspenseQueryResult<TData, ResponseErrorConfig<ListUsers401 | ListUsers403>> & { queryKey: TQueryKey }
 
   query.queryKey = queryKey as TQueryKey
 

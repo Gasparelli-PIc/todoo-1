@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -15,6 +15,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const login = usePostV1AuthLogin();
+  const searchParams = useSearchParams();
+  const redirectPath = useMemo(() => {
+    const raw = searchParams?.get("from");
+    if (!raw) return "/tarefas";
+    return raw.startsWith("/") ? raw : "/tarefas";
+  }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,8 +28,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login.mutateAsync({ data: { email, password } });
-      router.push("/");
-      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.replace(redirectPath);
+      } else {
+        router.replace(redirectPath);
+        router.refresh();
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Falha ao entrar. Verifique suas credenciais.";
       setError(message);
@@ -68,9 +78,6 @@ export default function LoginPage() {
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
-          <p className="mt-4 text-sm text-muted">
-            Não tem conta? <a className="underline" href="/register">Registre-se</a>
-          </p>
         </CardContent>
       </Card>
     </div>

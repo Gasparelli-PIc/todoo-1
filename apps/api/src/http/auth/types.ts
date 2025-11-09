@@ -18,4 +18,5 @@ export const SignUpBodySchema = z.object({
   password: z.string().min(8).max(128),
   image: z.string().url().optional(),
   callbackURL: z.string().url().optional(),
+  role: z.enum(['ADMIN', 'USER']).optional(),
 })

@@ -1,5 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
+const defaultPort = Number(process.env.PORT ?? 3001)
+const rawAuthBaseURL = process.env.AUTH_BASE_URL ?? `http://localhost:${defaultPort}/api/auth`
+const authBaseURL = rawAuthBaseURL.endsWith('/') ? rawAuthBaseURL : `${rawAuthBaseURL}/`
+
 type ForwardOptions = {
   targetPath?: string
   method?: string
@@ -48,7 +52,16 @@ export async function forwardToBetterAuth(request: FastifyRequest, reply: Fastif
     }
   }
 
-  const url = new URL(`${targetPath}${originalUrl.search}`, `http://localhost:${process.env.PORT ?? 3001}`)
+  const finalTarget = targetPath ?? originalPath
+  const url = finalTarget?.startsWith('http')
+    ? new URL(`${finalTarget}${originalUrl.search}`)
+    : new URL(`${finalTarget}${originalUrl.search}`, authBaseURL)
+
+  request.log?.info?.({
+    originalPath,
+    targetPath: finalTarget,
+    resolvedUrl: url.toString(),
+  }, 'forwardToBetterAuth')
 
   // Copia cabeçalhos relevantes, incluindo cookies
   const headers: Record<string, string> = {

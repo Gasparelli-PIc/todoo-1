@@ -4,9 +4,9 @@
 */
 
 import fetch from "./.kubb/fetcher.ts";
-import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
-import type { GetUserQueryResponse, GetUserPathParams, GetUser404 } from "./types/GetUser.ts";
 import type { QueryKey, QueryClient, UseSuspenseQueryOptions, UseSuspenseQueryResult } from "@tanstack/react-query";
+import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
+import type { GetUserQueryResponse, GetUserPathParams, GetUser401, GetUser403, GetUser404 } from "./types/GetUser.ts";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 
 export const getUserSuspenseQueryKey = (id: GetUserPathParams["id"]) => [{ url: '/usuarios/users/:id', params: {id:id} }] as const
@@ -20,13 +20,13 @@ export type GetUserSuspenseQueryKey = ReturnType<typeof getUserSuspenseQueryKey>
 export async function getUserSuspense(id: GetUserPathParams["id"], config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const { client: request = fetch, ...requestConfig } = config  
   
-  const res = await request<GetUserQueryResponse, ResponseErrorConfig<GetUser404>, unknown>({ method : "GET", url : `/usuarios/users/${id}`, ... requestConfig })  
+  const res = await request<GetUserQueryResponse, ResponseErrorConfig<GetUser401 | GetUser403 | GetUser404>, unknown>({ method : "GET", url : `/usuarios/users/${id}`, ... requestConfig })  
   return res.data
 }
 
 export function getUserSuspenseQueryOptions(id: GetUserPathParams["id"], config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const queryKey = getUserSuspenseQueryKey(id)
-  return queryOptions<GetUserQueryResponse, ResponseErrorConfig<GetUser404>, GetUserQueryResponse, typeof queryKey>({
+  return queryOptions<GetUserQueryResponse, ResponseErrorConfig<GetUser401 | GetUser403 | GetUser404>, GetUserQueryResponse, typeof queryKey>({
    enabled: !!(id),
    queryKey,
    queryFn: async ({ signal }) => {
@@ -42,7 +42,7 @@ export function getUserSuspenseQueryOptions(id: GetUserPathParams["id"], config:
  */
 export function useGetUserSuspense<TData = GetUserQueryResponse, TQueryKey extends QueryKey = GetUserSuspenseQueryKey>(id: GetUserPathParams["id"], options: 
 {
-  query?: Partial<UseSuspenseQueryOptions<GetUserQueryResponse, ResponseErrorConfig<GetUser404>, TData, TQueryKey>> & { client?: QueryClient },
+  query?: Partial<UseSuspenseQueryOptions<GetUserQueryResponse, ResponseErrorConfig<GetUser401 | GetUser403 | GetUser404>, TData, TQueryKey>> & { client?: QueryClient },
   client?: Partial<RequestConfig> & { client?: typeof fetch }
 }
  = {}) {
@@ -54,7 +54,7 @@ export function useGetUserSuspense<TData = GetUserQueryResponse, TQueryKey exten
    ...getUserSuspenseQueryOptions(id, config),
    queryKey,
    ...queryOptions
-  } as unknown as UseSuspenseQueryOptions, queryClient) as UseSuspenseQueryResult<TData, ResponseErrorConfig<GetUser404>> & { queryKey: TQueryKey }
+  } as unknown as UseSuspenseQueryOptions, queryClient) as UseSuspenseQueryResult<TData, ResponseErrorConfig<GetUser401 | GetUser403 | GetUser404>> & { queryKey: TQueryKey }
 
   query.queryKey = queryKey as TQueryKey
 

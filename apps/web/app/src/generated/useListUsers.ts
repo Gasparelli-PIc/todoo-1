@@ -4,9 +4,9 @@
 */
 
 import fetch from "./.kubb/fetcher.ts";
-import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
-import type { ListUsersQueryResponse } from "./types/ListUsers.ts";
 import type { QueryKey, QueryClient, QueryObserverOptions, UseQueryResult } from "@tanstack/react-query";
+import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
+import type { ListUsersQueryResponse, ListUsers401, ListUsers403 } from "./types/ListUsers.ts";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 export const listUsersQueryKey = () => [{ url: '/usuarios/users' }] as const
@@ -20,13 +20,13 @@ export type ListUsersQueryKey = ReturnType<typeof listUsersQueryKey>
 export async function listUsers(config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const { client: request = fetch, ...requestConfig } = config  
   
-  const res = await request<ListUsersQueryResponse, ResponseErrorConfig<Error>, unknown>({ method : "GET", url : `/usuarios/users`, ... requestConfig })  
+  const res = await request<ListUsersQueryResponse, ResponseErrorConfig<ListUsers401 | ListUsers403>, unknown>({ method : "GET", url : `/usuarios/users`, ... requestConfig })  
   return res.data
 }
 
 export function listUsersQueryOptions(config: Partial<RequestConfig> & { client?: typeof fetch } = {}) {
   const queryKey = listUsersQueryKey()
-  return queryOptions<ListUsersQueryResponse, ResponseErrorConfig<Error>, ListUsersQueryResponse, typeof queryKey>({
+  return queryOptions<ListUsersQueryResponse, ResponseErrorConfig<ListUsers401 | ListUsers403>, ListUsersQueryResponse, typeof queryKey>({
  
    queryKey,
    queryFn: async ({ signal }) => {
@@ -42,7 +42,7 @@ export function listUsersQueryOptions(config: Partial<RequestConfig> & { client?
  */
 export function useListUsers<TData = ListUsersQueryResponse, TQueryData = ListUsersQueryResponse, TQueryKey extends QueryKey = ListUsersQueryKey>(options: 
 {
-  query?: Partial<QueryObserverOptions<ListUsersQueryResponse, ResponseErrorConfig<Error>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },
+  query?: Partial<QueryObserverOptions<ListUsersQueryResponse, ResponseErrorConfig<ListUsers401 | ListUsers403>, TData, TQueryData, TQueryKey>> & { client?: QueryClient },
   client?: Partial<RequestConfig> & { client?: typeof fetch }
 }
  = {}) {
@@ -54,7 +54,7 @@ export function useListUsers<TData = ListUsersQueryResponse, TQueryData = ListUs
    ...listUsersQueryOptions(config),
    queryKey,
    ...queryOptions
-  } as unknown as QueryObserverOptions, queryClient) as UseQueryResult<TData, ResponseErrorConfig<Error>> & { queryKey: TQueryKey }
+  } as unknown as QueryObserverOptions, queryClient) as UseQueryResult<TData, ResponseErrorConfig<ListUsers401 | ListUsers403>> & { queryKey: TQueryKey }
 
   query.queryKey = queryKey as TQueryKey
 

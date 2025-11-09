@@ -4,6 +4,18 @@
 */
 
 
+export const createUser201RoleEnum = {
+    "ADMIN": "ADMIN"
+} as const;
+
+export type CreateUser201RoleEnumKey = (typeof createUser201RoleEnum)[keyof typeof createUser201RoleEnum];
+
+export const createUser201RoleEnum2 = {
+    "USER": "USER"
+} as const;
+
+export type CreateUser201RoleEnum2Key = (typeof createUser201RoleEnum2)[keyof typeof createUser201RoleEnum2];
+
 /**
  * @description Default Response
 */
@@ -16,7 +28,40 @@ export type CreateUser201 = {
      * @type string
     */
     message: string;
+    role: (CreateUser201RoleEnumKey | CreateUser201RoleEnum2Key);
 };
+
+/**
+ * @description Default Response
+*/
+export type CreateUser401 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+/**
+ * @description Default Response
+*/
+export type CreateUser403 = {
+    /**
+     * @type string
+    */
+    error: string;
+};
+
+export const createUserMutationRequestRoleEnum = {
+    "ADMIN": "ADMIN"
+} as const;
+
+export type CreateUserMutationRequestRoleEnumKey = (typeof createUserMutationRequestRoleEnum)[keyof typeof createUserMutationRequestRoleEnum];
+
+export const createUserMutationRequestRoleEnum2 = {
+    "USER": "USER"
+} as const;
+
+export type CreateUserMutationRequestRoleEnum2Key = (typeof createUserMutationRequestRoleEnum2)[keyof typeof createUserMutationRequestRoleEnum2];
 
 export type CreateUserMutationRequest = {
     /**
@@ -28,6 +73,7 @@ export type CreateUserMutationRequest = {
      * @type string, email
     */
     email: string;
+    role?: (CreateUserMutationRequestRoleEnumKey | CreateUserMutationRequestRoleEnum2Key);
 };
 
 export type CreateUserMutationResponse = CreateUser201;
@@ -35,5 +81,5 @@ export type CreateUserMutationResponse = CreateUser201;
 export type CreateUserMutation = {
     Response: CreateUser201;
     Request: CreateUserMutationRequest;
-    Errors: any;
+    Errors: CreateUser401 | CreateUser403;
 };

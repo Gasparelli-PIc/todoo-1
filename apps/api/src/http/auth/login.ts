@@ -17,6 +17,7 @@ export default async function loginRoutes(app: fastifyTypedInstance) {
       returnHeaders: true,
     })
     const cookies = (headers as any).getSetCookie?.()
+    request.log.info({ cookies }, 'set-cookie headers for /v1/auth/login')
     if (cookies && cookies.length) reply.header('set-cookie', cookies)
     return reply.send(response)
   })

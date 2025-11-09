@@ -4,9 +4,9 @@
 */
 
 import fetch from "./.kubb/fetcher.ts";
-import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
-import type { UpdateUserMutationRequest, UpdateUserMutationResponse, UpdateUserPathParams, UpdateUser404 } from "./types/UpdateUser.ts";
 import type { UseMutationOptions, UseMutationResult, QueryClient } from "@tanstack/react-query";
+import type { RequestConfig, ResponseErrorConfig } from "./.kubb/fetcher.ts";
+import type { UpdateUserMutationRequest, UpdateUserMutationResponse, UpdateUserPathParams, UpdateUser401, UpdateUser403, UpdateUser404 } from "./types/UpdateUser.ts";
 import { mutationOptions, useMutation } from "@tanstack/react-query";
 
 export const updateUserMutationKey = () => [{ url: '/usuarios/users/:id' }] as const
@@ -22,13 +22,13 @@ export async function updateUser(id: UpdateUserPathParams["id"], data?: UpdateUs
   
   const requestData = data  
   
-  const res = await request<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser404>, UpdateUserMutationRequest>({ method : "PUT", url : `/usuarios/users/${id}`, data : requestData, ... requestConfig })  
+  const res = await request<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser401 | UpdateUser403 | UpdateUser404>, UpdateUserMutationRequest>({ method : "PUT", url : `/usuarios/users/${id}`, data : requestData, ... requestConfig })  
   return res.data
 }
 
 export function updateUserMutationOptions(config: Partial<RequestConfig<UpdateUserMutationRequest>> & { client?: typeof fetch } = {}) {
   const mutationKey = updateUserMutationKey()
-  return mutationOptions<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, typeof mutationKey>({
+  return mutationOptions<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser401 | UpdateUser403 | UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, typeof mutationKey>({
     mutationKey,
     mutationFn: async({ id, data }) => {
       return updateUser(id, data, config)
@@ -42,7 +42,7 @@ export function updateUserMutationOptions(config: Partial<RequestConfig<UpdateUs
  */
 export function useUpdateUser<TContext>(options: 
 {
-  mutation?: UseMutationOptions<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext> & { client?: QueryClient },
+  mutation?: UseMutationOptions<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser401 | UpdateUser403 | UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext> & { client?: QueryClient },
   client?: Partial<RequestConfig<UpdateUserMutationRequest>> & { client?: typeof fetch },
 }
  = {}) {
@@ -50,11 +50,11 @@ export function useUpdateUser<TContext>(options:
   const { client: queryClient, ...mutationOptions } = mutation;
   const mutationKey = mutationOptions.mutationKey ?? updateUserMutationKey()
 
-  const baseOptions = updateUserMutationOptions(config) as UseMutationOptions<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext>
+  const baseOptions = updateUserMutationOptions(config) as UseMutationOptions<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser401 | UpdateUser403 | UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext>
 
-  return useMutation<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext>({
+  return useMutation<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser401 | UpdateUser403 | UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext>({
     ...baseOptions,
     mutationKey,
     ...mutationOptions,
-  }, queryClient) as UseMutationResult<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext>
+  }, queryClient) as UseMutationResult<UpdateUserMutationResponse, ResponseErrorConfig<UpdateUser401 | UpdateUser403 | UpdateUser404>, {id: UpdateUserPathParams["id"], data?: UpdateUserMutationRequest}, TContext>
 }

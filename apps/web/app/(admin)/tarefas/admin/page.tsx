@@ -3,18 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { authClient } from "../../../lib/auth-client";
-import { createAbilityFor, subject } from "../../../lib/ability";
-import { useGetUser } from "../../src/generated/useGetUser";
-import { useListUsers } from "../../src/generated/useListUsers";
-import { useListTasks, listTasksQueryKey } from "../../src/generated/useListTasks";
-import { useCreateTask } from "../../src/generated/useCreateTask";
-import { useUpdateTask } from "../../src/generated/useUpdateTask";
-import { useDeleteTask } from "../../src/generated/useDeleteTask";
-import { Card } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { authClient } from "../../../../lib/auth-client";
+import { createAbilityFor, subject } from "@repo/auth";
+import { useGetUser } from "../../../src/generated/useGetUser";
+import { useListUsers } from "../../../src/generated/useListUsers";
+import { useListTasks, listTasksQueryKey } from "../../../src/generated/useListTasks";
+import { useCreateTask } from "../../../src/generated/useCreateTask";
+import { useUpdateTask } from "../../../src/generated/useUpdateTask";
+import { useDeleteTask } from "../../../src/generated/useDeleteTask";
+import { Card } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
+import { Input } from "../../../../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../../components/ui/dialog";
 
 type UiTask = {
   id: string;
@@ -44,6 +45,7 @@ export default function AdminTasksPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newOwnerId, setNewOwnerId] = useState<string | undefined>(undefined);
+  const [isCreateOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
@@ -114,7 +116,10 @@ export default function AdminTasksPage() {
 
   const createTask = useCreateTask({
     mutation: {
-      onSuccess: () => qc.invalidateQueries({ queryKey: listTasksQueryKey() }),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: listTasksQueryKey() });
+        setCreateOpen(false);
+      },
     },
   });
   const updateTask = useUpdateTask({
@@ -212,51 +217,68 @@ export default function AdminTasksPage() {
   return (
     <div className="space-y-6">
       <Card aria-label="Criar tarefa" className="grid gap-3 p-4">
-        <h2 className="text-lg font-medium">Criar nova tarefa</h2>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <div className="grid gap-1">
-            <span className="text-xs uppercase tracking-wide text-neutral-400">Título</span>
-            <Input
-              type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addTask();
-              }}
-              placeholder="Nova tarefa..."
-            />
-          </div>
-          <div className="grid gap-1">
-            <span className="text-xs uppercase tracking-wide text-neutral-400">Responsável</span>
-            <Select value={newOwnerId ?? ""} onValueChange={(v) => setNewOwnerId(v || undefined)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um usuário" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {(user.nome || user.email) ?? user.email} ({user.role})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="grid gap-1">
-          <span className="text-xs uppercase tracking-wide text-neutral-400">Descrição</span>
-          <Input
-            type="text"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            placeholder="Descrição (opcional)"
-          />
-        </div>
-        <div className="flex justify-end">
-          <Button onClick={addTask} disabled={createTask.isPending || !newOwnerId}>
-            {createTask.isPending ? "Adicionando..." : "Adicionar"}
-          </Button>
+        <div className="h-12 flex items-center justify-between">
+          <h2 className="text-lg font-medium">Criar nova tarefa</h2>
+          <Button onClick={() => setCreateOpen(true)}>Nova tarefa</Button>
         </div>
       </Card>
+      <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="w-full max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nova tarefa</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addTask();
+            }}
+            className="grid gap-3"
+          >
+            <div className="grid gap-1">
+              <span className="text-xs uppercase tracking-wide text-neutral-400">Título</span>
+              <Input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Nova tarefa..."
+                required
+              />
+            </div>
+            <div className="grid gap-1">
+              <span className="text-xs uppercase tracking-wide text-neutral-400">Responsável</span>
+              <Select value={newOwnerId ?? ""} onValueChange={(v) => setNewOwnerId(v || undefined)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione um usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {(user.nome || user.email) ?? user.email} ({user.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1">
+              <span className="text-xs uppercase tracking-wide text-neutral-400">Descrição</span>
+              <Input
+                type="text"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Descrição (opcional)"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)} disabled={createTask.isPending}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={createTask.isPending || !newOwnerId}>
+                {createTask.isPending ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <section aria-label="Lista completa de tarefas" className="rounded-lg border border-neutral-800 overflow-hidden">
         <header className="flex items-center justify-between bg-neutral-950/80 px-4 py-3">
@@ -265,14 +287,6 @@ export default function AdminTasksPage() {
             <p className="text-xs text-neutral-500">{tasks.length} registro(s)</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/tarefas/minhas")}
-              title="Ver apenas as minhas tarefas"
-            >
-              Minhas tarefas
-            </Button>
             <Button
               variant="outline"
               size="sm"

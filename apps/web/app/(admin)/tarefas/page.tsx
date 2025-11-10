@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "../../lib/auth-client";
-import { useGetUser } from "../src/generated/useGetUser";
+import { authClient } from "../../../lib/auth-client";
+import { useGetUser } from "../../src/generated/useGetUser";
 
 export default function TarefasPage() {
   const router = useRouter();

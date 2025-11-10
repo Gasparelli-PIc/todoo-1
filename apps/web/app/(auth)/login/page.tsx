@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { usePostV1AuthLogin } from "../src/generated/usePostV1AuthLogin";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { usePostV1AuthLogin } from "../../src/generated/usePostV1AuthLogin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,10 +68,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-2rem)] flex items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-2rem)] flex flex-col items-center justify-center p-4">
+      <div className="mb-6">
+        <span className="inline-block rounded-md bg-background px-3 py-1.5 text-3xl font-bold tracking-wide">
+          TODOO
+        </span>
+      </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Acessar conta</CardTitle>
+          <CardTitle className="text-lg">Acessar conta</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="grid gap-4">

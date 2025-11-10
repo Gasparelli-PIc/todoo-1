@@ -4,12 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { authClient } from "../../lib/auth-client";
-import { useGetUser } from "../src/generated/useGetUser";
-import { usePostV1AuthLogout } from "../src/generated/usePostV1AuthLogout";
-import { Button } from "../../components/ui/button";
-import { useTheme } from "../providers";
-import { Moon, Sun } from "lucide-react";
+import { authClient } from "../../../lib/auth-client";
+import { useGetUser } from "../../src/generated/useGetUser";
+import { usePostV1AuthLogout } from "../../src/generated/usePostV1AuthLogout";
+import { Button } from "../../../components/ui/button";
+// removed theme toggle
 
 export default function TarefasLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
@@ -51,58 +50,53 @@ export default function TarefasLayout({ children }: Readonly<{ children: React.R
   }
 
   const navItems = useMemo(() => {
-    const base = [{ href: "/tarefas/minhas", label: "Minhas tarefas" as const }];
     if (role === "ADMIN") {
-      base.push({ href: "/tarefas/admin", label: "Painel Admin" as const });
-      base.push({ href: "/register?from=/tarefas/admin", label: "Novo usuário" as const });
+      return [
+        { href: "/tarefas/admin", label: "Painel Admin" },
+        { href: "/tarefas/minhas", label: "Minhas tarefas" },
+        { href: "/tarefas/usuarios", label: "Usuários" },
+      ] as Array<{ href: string; label: string }>;
     }
-    return base;
+    return [{ href: "/tarefas/minhas", label: "Minhas tarefas" }] as Array<{ href: string; label: string }>;
   }, [role]);
 
   function isActive(href: string) {
     if (!pathname) return false;
     if (href === "/tarefas/minhas") return pathname.startsWith("/tarefas/minhas");
     if (href === "/tarefas/admin") return pathname.startsWith("/tarefas/admin");
+    if (href === "/tarefas/usuarios") return pathname.startsWith("/tarefas/usuarios");
     return pathname === href;
   }
 
-  const { theme, toggleTheme } = useTheme();
-
   return (
     <main className="max-w-6xl mx-auto p-4 md:p-6">
-      <div className="sticky top-0 z-10 mb-6 border-b border-neutral-800 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between py-3">
-          <div className="flex items-center gap-3">
+      <div className="flex gap-6">
+        <aside className="w-56 shrink-0">
+          <div className="mb-4">
             <Link href="/tarefas/minhas" className="text-xl font-semibold">
               TODOO
             </Link>
-            <nav className="flex flex-wrap gap-2 text-sm">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={
-                    "rounded-md px-3 py-1.5 border " +
-                    (isActive(item.href)
-                      ? "border-neutral-600 bg-neutral-900"
-                      : "border-transparent hover:border-neutral-700 hover:bg-neutral-900")
-                  }
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={toggleTheme}
-              variant="outline"
-              size="icon"
-              aria-label="Alternar tema"
-              title={theme === "dark" ? "Mudar para claro" : "Mudar para escuro"}
-            >
-              {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </Button>
+          <nav className="grid gap-2 text-sm">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  "rounded-md px-3 py-2 border " +
+                  (isActive(item.href)
+                    ? "border-neutral-600 bg-neutral-900"
+                    : "border-transparent hover:border-neutral-700 hover:bg-neutral-900")
+                }
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="mt-6 flex items-center justify-between gap-2">
+            <span className="text-xs text-neutral-500 truncate">
+              {userQuery.isLoading ? "Carregando..." : (userQuery.data?.nome || userQuery.data?.email || "")}
+            </span>
             <Button
               onClick={handleLogout}
               disabled={logout.isPending}
@@ -112,9 +106,11 @@ export default function TarefasLayout({ children }: Readonly<{ children: React.R
               {logout.isPending ? "Saindo..." : "Sair"}
             </Button>
           </div>
-        </div>
+        </aside>
+        <section className="flex-1">
+          <div>{children}</div>
+        </section>
       </div>
-      <div>{children}</div>
     </main>
   );
 }

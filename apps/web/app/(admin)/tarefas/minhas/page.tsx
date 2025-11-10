@@ -3,17 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { authClient } from "../../../lib/auth-client";
-import { createAbilityFor, subject } from "../../../lib/ability";
-import { useGetUser } from "../../src/generated/useGetUser";
-import { useListTasks, listTasksQueryKey } from "../../src/generated/useListTasks";
-import { useCreateTask } from "../../src/generated/useCreateTask";
-import { useUpdateTask } from "../../src/generated/useUpdateTask";
-import { useDeleteTask } from "../../src/generated/useDeleteTask";
-import { usePostV1AuthLogout } from "../../src/generated/usePostV1AuthLogout";
-import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
-import { Input } from "../../../components/ui/input";
-import { Button } from "../../../components/ui/button";
+import { authClient } from "../../../../lib/auth-client";
+import { createAbilityFor, subject } from "@repo/auth";
+import { useGetUser } from "../../../src/generated/useGetUser";
+import { useListTasks, listTasksQueryKey } from "../../../src/generated/useListTasks";
+import { useCreateTask } from "../../../src/generated/useCreateTask";
+import { useUpdateTask } from "../../../src/generated/useUpdateTask";
+import { useDeleteTask } from "../../../src/generated/useDeleteTask";
+import { usePostV1AuthLogout } from "../../../src/generated/usePostV1AuthLogout";
+import { Card, CardHeader, CardTitle, CardContent, CardAction } from "../../../../components/ui/card";
+import { Input } from "../../../../components/ui/input";
+import { Button } from "../../../../components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../../components/ui/dialog";
 
 type UiTask = {
   id: string;
@@ -29,6 +30,7 @@ export default function UserTasksPage() {
 
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [isCreateOpen, setCreateOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
@@ -79,7 +81,10 @@ export default function UserTasksPage() {
 
   const createTask = useCreateTask({
     mutation: {
-      onSuccess: () => qc.invalidateQueries({ queryKey: listTasksQueryKey({ userId }) }),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: listTasksQueryKey({ userId }) });
+        setCreateOpen(false);
+      },
     },
   });
   const updateTask = useUpdateTask({
@@ -196,35 +201,49 @@ export default function UserTasksPage() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Adicionar nova tarefa</CardTitle>
+        <CardHeader className="h-12 items-center px-0">
+          <CardTitle className="text-lg font-medium row-span-2 self-center">Adicionar nova tarefa</CardTitle>
+          <CardAction>
+            <Button onClick={() => setCreateOpen(true)}>Nova tarefa</Button>
+          </CardAction>
         </CardHeader>
-        <CardContent className="grid gap-2">
-          <Input
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addTask();
-            }}
-            placeholder="Título da tarefa"
-          />
-          <Input
-            type="text"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addTask();
-            }}
-            placeholder="Descrição (opcional)"
-          />
-          <div>
-            <Button onClick={addTask} disabled={createTask.isPending}>
-              {createTask.isPending ? "Adicionando..." : "Adicionar"}
-            </Button>
-          </div>
-        </CardContent>
       </Card>
+      <Dialog open={isCreateOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="w-full max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nova tarefa</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addTask();
+            }}
+            className="grid gap-3"
+          >
+            <Input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Título da tarefa"
+              required
+            />
+            <Input
+              type="text"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="Descrição (opcional)"
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)} disabled={createTask.isPending}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={createTask.isPending}>
+                {createTask.isPending ? "Adicionando..." : "Adicionar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <section className="grid gap-2">
         <header className="flex items-center justify-between">

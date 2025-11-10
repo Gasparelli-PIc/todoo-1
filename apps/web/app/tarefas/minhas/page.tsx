@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../../../lib/auth-client";
@@ -12,6 +11,9 @@ import { useCreateTask } from "../../src/generated/useCreateTask";
 import { useUpdateTask } from "../../src/generated/useUpdateTask";
 import { useDeleteTask } from "../../src/generated/useDeleteTask";
 import { usePostV1AuthLogout } from "../../src/generated/usePostV1AuthLogout";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
 
 type UiTask = {
   id: string;
@@ -50,13 +52,8 @@ export default function UserTasksPage() {
   const userQuery = useGetUser(userId ?? "", { query: { enabled: !!userId } });
   const logout = usePostV1AuthLogout();
 
-  useEffect(() => {
-    if (userQuery.isLoading) return;
-    const role = userQuery.data?.role;
-    if (role === "ADMIN") {
-      router.replace("/tarefas/admin");
-    }
-  }, [userQuery.isLoading, userQuery.data?.role, router]);
+  // Admin também pode visualizar suas próprias tarefas nesta página,
+  // portanto não redirecionamos automaticamente para /tarefas/admin.
 
   const ability = useMemo(() => {
     if (!userId || !userQuery.data?.role) return createAbilityFor(null);
@@ -197,68 +194,46 @@ export default function UserTasksPage() {
   }
 
   return (
-    <main className="max-w-3xl mx-auto p-4 space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Minhas tarefas</h1>
-          <p className="text-sm text-neutral-400">Gerencie suas atividades diárias.</p>
-        </div>
-        <nav className="flex gap-3 text-sm text-muted">
-          <button
-            onClick={handleLogout}
-            disabled={logout.isPending}
-            className="underline disabled:opacity-60"
-          >
-            {logout.isPending ? "Saindo..." : "Sair"}
-          </button>
-        </nav>
-      </header>
-
-      <section className="grid gap-2 rounded-lg border border-neutral-800 p-4">
-        <h2 className="text-lg font-medium">Adicionar nova tarefa</h2>
-        <input
-          className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700 px-3 h-10"
-          type="text"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") addTask();
-          }}
-          placeholder="Título da tarefa"
-        />
-        <input
-          className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700 px-3 h-10"
-          type="text"
-          value={newDescription}
-          onChange={(e) => setNewDescription(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") addTask();
-          }}
-          placeholder="Descrição (opcional)"
-        />
-        <div>
-          <button
-            onClick={addTask}
-            disabled={createTask.isPending}
-            className="h-10 px-4 rounded-md border border-neutral-800 bg-white text-black disabled:opacity-60"
-          >
-            {createTask.isPending ? "Adicionando..." : "Adicionar"}
-          </button>
-        </div>
-      </section>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Adicionar nova tarefa</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2">
+          <Input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addTask();
+            }}
+            placeholder="Título da tarefa"
+          />
+          <Input
+            type="text"
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addTask();
+            }}
+            placeholder="Descrição (opcional)"
+          />
+          <div>
+            <Button onClick={addTask} disabled={createTask.isPending}>
+              {createTask.isPending ? "Adicionando..." : "Adicionar"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-2">
         <header className="flex items-center justify-between">
           <span className="text-sm text-neutral-400">
             {remainingCount} tarefa(s) pendente(s)
           </span>
-          <button
-            onClick={clearCompleted}
-            disabled={!canClearCompleted}
-            className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900 text-sm disabled:opacity-60"
-          >
+          <Button onClick={clearCompleted} disabled={!canClearCompleted} variant="outline" size="sm">
             Limpar concluídas
-          </button>
+          </Button>
         </header>
 
         {tasksQuery.isLoading ? (
@@ -287,7 +262,7 @@ export default function UserTasksPage() {
                 <div className="flex-1 space-y-2">
                   {isEditing ? (
                     <>
-                      <input
+                      <Input
                         autoFocus
                         value={editingTitle}
                         onChange={(e) => setEditingTitle(e.target.value)}
@@ -295,16 +270,16 @@ export default function UserTasksPage() {
                           if (e.key === "Enter") saveEdit();
                           if (e.key === "Escape") cancelEdit();
                         }}
-                        className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white px-2 h-9"
+                        className="h-9"
                       />
-                      <input
+                      <Input
                         value={editingDescription}
                         onChange={(e) => setEditingDescription(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") saveEdit();
                           if (e.key === "Escape") cancelEdit();
                         }}
-                        className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white px-2 h-9"
+                        className="h-9"
                         placeholder="Descrição"
                       />
                     </>
@@ -322,35 +297,32 @@ export default function UserTasksPage() {
                 <div className="flex flex-col gap-2">
                   {isEditing ? (
                     <>
-                      <button
-                        onClick={saveEdit}
-                        className="h-9 px-3 rounded-md border border-neutral-800 bg-white text-black"
-                      >
+                      <Button onClick={saveEdit} size="sm">
                         Salvar
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900"
-                      >
+                      </Button>
+                      <Button onClick={cancelEdit} variant="outline" size="sm">
                         Cancelar
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <>
-                      <button
+                      <Button
                         onClick={() => startEdit(task)}
                         disabled={!canUpdate}
-                        className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900 disabled:opacity-60"
+                        variant="outline"
+                        size="sm"
                       >
                         Editar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => removeTask(task.id)}
                         disabled={!canDelete}
-                        className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900 text-red-400 disabled:opacity-60"
+                        variant="outline"
+                        size="sm"
+                        className="text-red-400"
                       >
                         Apagar
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
@@ -359,7 +331,7 @@ export default function UserTasksPage() {
           })
         )}
       </section>
-    </main>
+    </div>
   );
 }
 

@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { usePostV1AuthSignInEmail } from "../src/generated/usePostV1AuthSignInEmail";
 import client from "../src/generated/.kubb/fetcher";
 import { axiosInstance } from "../src/generated/.kubb/fetcher";
@@ -208,15 +209,15 @@ export default function RegisterPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="role">Tipo de usuário</Label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as "ADMIN" | "USER")}
-                className="h-10 rounded-md border border-neutral-800 bg-neutral-950 text-white px-3"
-              >
-                <option value="USER">Usuário comum</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
+              <Select value={role} onValueChange={(v) => setRole(v as "ADMIN" | "USER")}>
+                <SelectTrigger id="role" className="w-full">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USER">Usuário comum</SelectItem>
+                  <SelectItem value="ADMIN">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             {error ? (
               <p className="text-red-400 text-sm">{error}</p>

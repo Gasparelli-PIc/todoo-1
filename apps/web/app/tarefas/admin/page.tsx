@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "../../../lib/auth-client";
@@ -12,7 +11,10 @@ import { useListTasks, listTasksQueryKey } from "../../src/generated/useListTask
 import { useCreateTask } from "../../src/generated/useCreateTask";
 import { useUpdateTask } from "../../src/generated/useUpdateTask";
 import { useDeleteTask } from "../../src/generated/useDeleteTask";
-import { usePostV1AuthLogout } from "../../src/generated/usePostV1AuthLogout";
+import { Card } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 
 type UiTask = {
   id: string;
@@ -64,7 +66,6 @@ export default function AdminTasksPage() {
 
   const userId = session?.user?.id as string | undefined;
   const userQuery = useGetUser(userId ?? "", { query: { enabled: !!userId } });
-  const logout = usePostV1AuthLogout();
 
   useEffect(() => {
     if (userQuery.isLoading) return;
@@ -200,20 +201,6 @@ export default function AdminTasksPage() {
     deleteTask.mutate({ id: task.id });
   }
 
-  async function handleLogout() {
-    try {
-      await logout.mutateAsync();
-    } finally {
-      qc.clear();
-      if (typeof window !== "undefined") {
-        window.location.replace("/login?from=/tarefas");
-      } else {
-        router.replace("/login");
-        router.refresh();
-      }
-    }
-  }
-
   if (isSessionLoading || userQuery.isLoading) {
     return (
       <main className="max-w-5xl mx-auto p-6">
@@ -223,33 +210,13 @@ export default function AdminTasksPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Painel de Tarefas (Admin)</h1>
-          <p className="text-sm text-neutral-400">
-            Gerencie todas as tarefas e usuários do sistema.
-          </p>
-        </div>
-        <nav className="flex flex-wrap gap-2 text-sm text-muted">
-          <Link className="underline" href="/register?from=/tarefas/admin">Novo usuário</Link>
-          <button
-            onClick={handleLogout}
-            disabled={logout.isPending}
-            className="underline disabled:opacity-60"
-          >
-            {logout.isPending ? "Saindo..." : "Sair"}
-          </button>
-        </nav>
-      </header>
-
-      <section aria-label="Criar tarefa" className="grid gap-3 rounded-lg border border-neutral-800 p-4">
+    <div className="space-y-6">
+      <Card aria-label="Criar tarefa" className="grid gap-3 p-4">
         <h2 className="text-lg font-medium">Criar nova tarefa</h2>
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="grid gap-1">
+          <div className="grid gap-1">
             <span className="text-xs uppercase tracking-wide text-neutral-400">Título</span>
-            <input
-              className="rounded-md border border-neutral-800 bg-neutral-950 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700 px-3 h-10"
+            <Input
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
@@ -258,42 +225,38 @@ export default function AdminTasksPage() {
               }}
               placeholder="Nova tarefa..."
             />
-          </label>
-          <label className="grid gap-1">
+          </div>
+          <div className="grid gap-1">
             <span className="text-xs uppercase tracking-wide text-neutral-400">Responsável</span>
-            <select
-              className="h-10 rounded-md border border-neutral-800 bg-neutral-950 text-white focus:outline-none focus:ring-2 focus:ring-neutral-700 px-3"
-              value={newOwnerId ?? ""}
-              onChange={(e) => setNewOwnerId(e.target.value || undefined)}
-            >
-              {availableUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {(user.nome || user.email) ?? user.email} ({user.role})
-                </option>
-              ))}
-            </select>
-          </label>
+            <Select value={newOwnerId ?? ""} onValueChange={(v) => setNewOwnerId(v || undefined)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione um usuário" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {(user.nome || user.email) ?? user.email} ({user.role})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <label className="grid gap-1">
+        <div className="grid gap-1">
           <span className="text-xs uppercase tracking-wide text-neutral-400">Descrição</span>
-          <input
-            className="rounded-md border border-neutral-800 bg-neutral-950 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700 px-3 h-10"
+          <Input
             type="text"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             placeholder="Descrição (opcional)"
           />
-        </label>
-        <div className="flex justify-end">
-          <button
-            onClick={addTask}
-            disabled={createTask.isPending || !newOwnerId}
-            className="h-10 px-4 rounded-md border border-neutral-800 bg-white text-black disabled:opacity-60"
-          >
-            {createTask.isPending ? "Adicionando..." : "Adicionar"}
-          </button>
         </div>
-      </section>
+        <div className="flex justify-end">
+          <Button onClick={addTask} disabled={createTask.isPending || !newOwnerId}>
+            {createTask.isPending ? "Adicionando..." : "Adicionar"}
+          </Button>
+        </div>
+      </Card>
 
       <section aria-label="Lista completa de tarefas" className="rounded-lg border border-neutral-800 overflow-hidden">
         <header className="flex items-center justify-between bg-neutral-950/80 px-4 py-3">
@@ -301,15 +264,26 @@ export default function AdminTasksPage() {
             <h2 className="text-lg font-medium">Todas as tarefas</h2>
             <p className="text-xs text-neutral-500">{tasks.length} registro(s)</p>
           </div>
-          <button
-            onClick={() => tasks
-              .filter((task) => task.completo && ability.can("delete", subject("Task", { id: task.id, userId: task.userId })))
-              .forEach((task) => deleteTask.mutate({ id: task.id }))}
-            disabled={!tasks.some((task) => task.completo && ability.can("delete", subject("Task", { id: task.id, userId: task.userId })))}
-            className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900 text-sm disabled:opacity-60"
-          >
-            Limpar concluídas
-          </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/tarefas/minhas")}
+              title="Ver apenas as minhas tarefas"
+            >
+              Minhas tarefas
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => tasks
+                .filter((task) => task.completo && ability.can("delete", subject("Task", { id: task.id, userId: task.userId })))
+                .forEach((task) => deleteTask.mutate({ id: task.id }))}
+              disabled={!tasks.some((task) => task.completo && ability.can("delete", subject("Task", { id: task.id, userId: task.userId })))}
+            >
+              Limpar concluídas
+            </Button>
+          </div>
         </header>
 
         <div className="overflow-x-auto">
@@ -346,10 +320,10 @@ export default function AdminTasksPage() {
                     <tr key={task.id} className="border-t border-neutral-800">
                       <td className="px-4 py-3 align-top">
                         {isEditing ? (
-                          <input
+                          <Input
                             value={editingTitle}
                             onChange={(e) => setEditingTitle(e.target.value)}
-                            className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white px-2 h-9"
+                            className="w-full h-9"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") saveEdit();
                               if (e.key === "Escape") cancelEdit();
@@ -361,10 +335,10 @@ export default function AdminTasksPage() {
                       </td>
                       <td className="px-4 py-3 align-top">
                         {isEditing ? (
-                          <input
+                          <Input
                             value={editingDescription}
                             onChange={(e) => setEditingDescription(e.target.value)}
-                            className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white px-2 h-9"
+                            className="w-full h-9"
                             onKeyDown={(e) => {
                               if (e.key === "Enter") saveEdit();
                               if (e.key === "Escape") cancelEdit();
@@ -378,17 +352,19 @@ export default function AdminTasksPage() {
                       </td>
                       <td className="px-4 py-3 align-top">
                         {isEditing ? (
-                          <select
+                          <Select
                             value={editingOwnerId ?? ""}
-                            onChange={(e) => setEditingOwnerId(e.target.value)}
-                            className="w-full rounded-md border border-neutral-800 bg-neutral-950 text-white px-2 h-9"
+                            onValueChange={(v) => setEditingOwnerId(v)}
                           >
-                            {availableUsers.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {(user.nome || user.email) ?? user.email} ({user.role})
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="w-full h-9" />
+                            <SelectContent>
+                              {availableUsers.map((user) => (
+                                <SelectItem key={user.id} value={user.id}>
+                                  {(user.nome || user.email) ?? user.email} ({user.role})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <div className="text-neutral-300">
                             <div>{task.owner?.nome || task.owner?.email || "Sem usuário"}</div>
@@ -397,46 +373,44 @@ export default function AdminTasksPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 align-top">
-                        <button
+                        <Button
                           onClick={() => toggleTask(task)}
                           disabled={!canUpdate}
-                          className="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase tracking-wide disabled:opacity-60"
+                          variant="outline"
+                          size="sm"
                         >
                           {task.completo ? "Concluída" : "Pendente"}
-                        </button>
+                        </Button>
                       </td>
                       <td className="px-4 py-3 align-top text-right space-y-2">
                         {isEditing ? (
                           <div className="flex justify-end gap-2">
-                            <button
-                              onClick={saveEdit}
-                              className="h-9 px-3 rounded-md border border-neutral-800 bg-white text-black"
-                            >
+                            <Button onClick={saveEdit} size="sm">
                               Salvar
-                            </button>
-                            <button
-                              onClick={cancelEdit}
-                              className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900"
-                            >
+                            </Button>
+                            <Button onClick={cancelEdit} variant="outline" size="sm">
                               Cancelar
-                            </button>
+                            </Button>
                           </div>
                         ) : (
                           <div className="flex justify-end gap-2">
-                            <button
+                            <Button
                               onClick={() => startEdit(task)}
                               disabled={!canUpdate}
-                              className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900 disabled:opacity-60"
+                              variant="outline"
+                              size="sm"
                             >
                               Editar
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               onClick={() => removeTask(task.id)}
                               disabled={!canDelete}
-                              className="h-9 px-3 rounded-md border border-neutral-800 bg-neutral-900 text-red-400 disabled:opacity-60"
+                              variant="outline"
+                              size="sm"
+                              className="text-red-400"
                             >
                               Apagar
-                            </button>
+                            </Button>
                           </div>
                         )}
                       </td>
@@ -448,7 +422,7 @@ export default function AdminTasksPage() {
           </table>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

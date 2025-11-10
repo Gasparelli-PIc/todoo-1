@@ -1,7 +1,7 @@
 import type { fastifyTypedInstance } from '../../types.ts'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma.ts'
-import { createAbilityFor, subject } from '../../lib/casl.ts'
+import { createAbilityFor, subject } from '@repo/auth'
 import { getCurrentUser } from '../../lib/current-user.ts'
 
 export default async function tarefasRoutes(app: fastifyTypedInstance) {

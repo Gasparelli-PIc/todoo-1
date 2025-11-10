@@ -4,7 +4,8 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@repo/auth": ["../../packages/auth/src/index.ts"]
     },
     "plugins": [
       {

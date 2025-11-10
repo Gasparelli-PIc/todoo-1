@@ -2,7 +2,7 @@ import type { fastifyTypedInstance } from '../../types.ts'
 import { z } from 'zod'
 import { prisma } from '../../lib/prisma.ts'
 import { randomUUID } from 'node:crypto'
-import { createAbilityFor, subject } from '../../lib/casl.ts'
+import { createAbilityFor, subject } from '@repo/auth'
 import { getCurrentUser } from '../../lib/current-user.ts'
 
 export default async function usuariosRoutes(app: fastifyTypedInstance) {

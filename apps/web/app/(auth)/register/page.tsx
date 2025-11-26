@@ -86,14 +86,8 @@ function RegisterContent() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isSessionLoading) return;
-    if (hasAnyUsers === null) return;
-    // Se já existem usuários e não há sessão, redireciona para login
-    if (hasAnyUsers && session === null) {
-      router.replace("/login?from=/register");
-    }
-  }, [isSessionLoading, session, router, hasAnyUsers]);
+  // Redirecionamento removido: não forçamos mais o login se já existirem usuários,
+  // pois agora permitimos o registro público.
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

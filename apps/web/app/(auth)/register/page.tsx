@@ -148,25 +148,8 @@ function RegisterContent() {
 
   // Se não é admin e JÁ existem usuários, bloqueia criação;
   // se não existem usuários, libera tela sem sessão/admin.
-  if (hasAnyUsers && !isAdmin) {
-    return (
-      <div className="min-h-[calc(100vh-2rem)] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Acesso restrito</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <p className="text-muted">
-              Somente administradores podem cadastrar novos usuários.
-            </p>
-            <Button onClick={() => router.replace(redirectTarget)}>
-              Voltar
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Restrição removida: agora qualquer pessoa pode se registrar.
+  // O código anterior bloqueava o registro se já existissem usuários e não fosse admin.
 
   return (
     <div className="min-h-[calc(100vh-2rem)] flex flex-col items-center justify-center p-4">

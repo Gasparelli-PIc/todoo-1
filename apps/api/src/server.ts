@@ -31,7 +31,7 @@ const webUrl = process.env.WEB_URL || 'http://localhost:3000'
 
 // CORS (libera tudo em dev; restrinja em prod)
 await app.register(fastifyCors, {
-  origin: [webUrl],
+  origin: [webUrl, 'http://localhost:3000', 'https://doolt.vercel.app'],
   credentials: true,
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -65,13 +65,17 @@ app.get('/', () => {
 })
 
 await registerHttp(app)
+
 // CORS + encaminhamento (via middie) antes do roteamento do Fastify
-app.use('/api/auth/', (req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', webUrl)
+// Ajuste: usar /api/auth/* para capturar todas as sub-rotas
+app.use('/api/auth', (req, res, next) => {
+  const origin = req.headers.origin || webUrl
+  res.setHeader('Access-Control-Allow-Origin', origin)
   res.setHeader('Vary', 'Origin')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS')
+  
   if (req.method === 'OPTIONS') {
     res.statusCode = 204
     res.end()

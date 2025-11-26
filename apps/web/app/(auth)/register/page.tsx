@@ -212,18 +212,7 @@ function RegisterContent() {
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="role">Tipo de usuário</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as "ADMIN" | "USER")}>
-                <SelectTrigger id="role" className="w-full">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USER">Usuário comum</SelectItem>
-                  <SelectItem value="ADMIN">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Role selection removed - only admins can assign roles */}
             {error ? (
               <p className="text-red-400 text-sm">{error}</p>
             ) : null}

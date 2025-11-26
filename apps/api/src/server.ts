@@ -26,9 +26,12 @@ const app = Fastify({logger:true}).withTypeProvider<ZodTypeProvider>() // <- tip
 app.setValidatorCompiler(validatorCompiler)
 app.setSerializerCompiler(serializerCompiler)
 
+// Define a URL do frontend (Vercel ou Localhost)
+const webUrl = process.env.WEB_URL || 'http://localhost:3000'
+
 // CORS (libera tudo em dev; restrinja em prod)
 await app.register(fastifyCors, {
-  origin: ['http://localhost:3000'],
+  origin: [webUrl],
   credentials: true,
   methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -45,8 +48,8 @@ app.register(fastifySwagger, {
     },
     servers: [
       {
-        url: 'http://localhost:3001',
-        description: 'Local dev server',
+        url: process.env.API_URL || 'http://localhost:3001',
+        description: 'API Server',
       },
     ],
   },
@@ -64,8 +67,7 @@ app.get('/', () => {
 await registerHttp(app)
 // CORS + encaminhamento (via middie) antes do roteamento do Fastify
 app.use('/api/auth/', (req, res, next) => {
-  const origin = 'http://localhost:3000'
-  res.setHeader('Access-Control-Allow-Origin', origin)
+  res.setHeader('Access-Control-Allow-Origin', webUrl)
   res.setHeader('Vary', 'Origin')
   res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
@@ -105,6 +107,7 @@ const start = async () => {
     const port = Number(process.env.PORT ?? 3001)
     const host = process.env.HOST ?? '0.0.0.0'
     await app.listen({ port, host })
+    console.log(`Server running at http://${host}:${port}`)
   } catch (err) {
     app.log.error(err)
     process.exit(1)

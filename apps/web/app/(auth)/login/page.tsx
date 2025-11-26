@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
 import { usePostV1AuthLogin } from "../../src/generated/usePostV1AuthLogin";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,10 +32,14 @@ export default function LoginPage() {
     let cancelled = false;
     async function checkHasAny() {
       try {
-        const apiBaseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-        const res = await fetch(`${apiBaseURL.replace(/\/$/, "")}/usuarios/has-any`, {
-          credentials: "include",
-        });
+        const apiBaseURL =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const res = await fetch(
+          `${apiBaseURL.replace(/\/$/, "")}/usuarios/has-any`,
+          {
+            credentials: "include",
+          }
+        );
         if (!cancelled && res.ok) {
           const data = await res.json();
           if (data?.hasAny === false) {
@@ -60,7 +69,10 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Falha ao entrar. Verifique suas credenciais.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Falha ao entrar. Verifique suas credenciais.";
       setError(message);
     } finally {
       setLoading(false);
@@ -101,9 +113,7 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error ? (
-              <p className="text-red-400 text-sm">{error}</p>
-            ) : null}
+            {error ? <p className="text-red-400 text-sm">{error}</p> : null}
             <Button type="submit" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </Button>
@@ -114,4 +124,10 @@ export default function LoginPage() {
   );
 }
 
-
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}

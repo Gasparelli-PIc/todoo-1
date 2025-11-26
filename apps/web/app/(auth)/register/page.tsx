@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
@@ -15,7 +15,7 @@ import { useUpdateUser } from "../../src/generated/useUpdateUser";
 import { useGetUser } from "../../src/generated/useGetUser";
 import { authClient } from "../../../lib/auth-client";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -244,6 +244,14 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }
 
